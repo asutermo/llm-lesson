@@ -16,9 +16,6 @@ load_dotenv(find_dotenv())
 summarizer_pipeline = pipeline("summarization", model="facebook/bart-large-cnn")
 sentiment_pipeline = pipeline("sentiment-analysis", model="siebert/sentiment-roberta-large-english")
 
-# Summ/Sentiment
-# radio button links
-# then spit out the values
 articles = {
     "Native American voices are finally factoring into energy projects – a hydropower ruling is a victory for environmental justice on tribal lands": "https://theconversation.com/native-american-voices-are-finally-factoring-into-energy-projects-a-hydropower-ruling-is-a-victory-for-environmental-justice-on-tribal-lands-224612",
     "Does ‘virtue signaling’ pay off for entrepreneurs? We studied 81,799 Airbnb listings to find out": "https://theconversation.com/does-virtue-signaling-pay-off-for-entrepreneurs-we-studied-81-799-airbnb-listings-to-find-out-226450",
@@ -42,28 +39,31 @@ def summarize(article_title: str, summarize_or_sentiment:str) -> str:
     article_text = parse_html(article_link)
 
     if summarize_or_sentiment == "summarize":
-        summary = summarizer_pipeline(article_text)
-        return summary
+        summary = summarizer_pipeline(article_text[:1024], max_length=150, min_length=40)
+        return summary[0]['summary_text']
     else:
         sentiment = sentiment_pipeline(article_text)
         return sentiment
 
+def huggingface_demo() -> gr.Interface:
+    sorted_article_titles = sorted(articles.keys())
+    return gr.Interface(
+        fn = summarize,
+        inputs = [
+            gr.Dropdown(
+                articles.keys(), label="article_title", info="List of articles to summarize or get sentiment of!"
+            ),
+            gr.Radio(["summarize", "sentiment"], label="summarize_or_sentiment", info="Summarize or sentiment analysis of article"),
+        ],
+        outputs = "text",
+        examples=[[sorted_article_titles[0], "summarize"], [sorted_article_titles[1], "sentiment"]]
+    )
 
-sorted_article_titles = sorted(articles.keys())
-demo = gr.Interface(
-    fn = summarize,
-    inputs = [
-        gr.Dropdown(
-            articles.keys(), label="article_title", info="List of articles to summarize or get sentiment of!"
-        ),
-        gr.Radio(["summarize", "sentiment"], label="summarize_or_sentiment", info="Summarize or sentiment analysis of article"),
-    ],
-    outputs = "text",
-    examples=[[sorted_article_titles[0], "summarize"], [sorted_article_titles[1], "sentiment"]]
-)
+
+
 
 if __name__ == "__main__":
-    demo.launch()
+    huggingface_demo().launch()
     
 # Find API Key
 
