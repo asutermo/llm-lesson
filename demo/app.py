@@ -42,8 +42,8 @@ def summarize(article_title: str, summarize_or_sentiment:str) -> str:
         summary = summarizer_pipeline(article_text[:1024], max_length=150, min_length=40)
         return summary[0]['summary_text']
     else:
-        sentiment = sentiment_pipeline(article_text)
-        return sentiment
+        sentiment = sentiment_pipeline(article_text[:514])
+        return r"Sentiment: " + sentiment[0]['label'] + r" with a confidence of " + str(sentiment[0]['score'])
 
 def huggingface_demo() -> gr.Interface:
     sorted_article_titles = sorted(articles.keys())
