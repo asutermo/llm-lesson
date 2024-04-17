@@ -9,9 +9,10 @@ from dotenv import load_dotenv, find_dotenv
 # from openai import OpenAI
 from transformers import pipeline  # type: ignore
 
-
+# Load keys
 load_dotenv(find_dotenv())
 
+# preload models
 summarizer_pipeline = pipeline("summarization", model="facebook/bart-large-cnn")
 sentiment_pipeline = pipeline("sentiment-analysis", model="siebert/sentiment-roberta-large-english")
 
@@ -37,7 +38,7 @@ def parse_html(url: str) -> str:
         raise Exception("No article body found.")
 
 def summarize(article_title: str, summarize_or_sentiment:str) -> str:
-    article_link = article[article]
+    article_link = articles[article_title]
     article_text = parse_html(article_link)
 
     if summarize_or_sentiment == "summarize":
@@ -48,19 +49,22 @@ def summarize(article_title: str, summarize_or_sentiment:str) -> str:
         return sentiment
 
 
-huggingface_demo = gr.Interface(
+sorted_article_titles = sorted(articles.keys())
+demo = gr.Interface(
     fn = summarize,
     inputs = [
         gr.Dropdown(
-            articles.keys(), label="articles", info="List of articles to summarize or get sentiment of!"
+            articles.keys(), label="article_title", info="List of articles to summarize or get sentiment of!"
         ),
-        gr.Radio(["summarize", "sentiment"], label="type", info="Summarize or sentiment analysis of article"),
+        gr.Radio(["summarize", "sentiment"], label="summarize_or_sentiment", info="Summarize or sentiment analysis of article"),
     ],
-    outputs = ["text"]
+    outputs = "text",
+    examples=[[sorted_article_titles[0], "summarize"], [sorted_article_titles[1], "sentiment"]]
 )
 
-huggingface_demo.launch()
-
+if __name__ == "__main__":
+    demo.launch()
+    
 # Find API Key
 
 # Chatbot demo with multimodal input (text, markdown, LaTeX, code blocks, image, audio, & video). Plus shows support for streaming text.
@@ -68,45 +72,45 @@ huggingface_demo.launch()
 def openai_predict():
     pass
 
-def huggingface_predict():
-    pass
+# def huggingface_predict():
+#     pass
 
 
 
-def print_like_dislike(x: gr.LikeData):
-    print(x.index, x.value, x.liked)
+# def print_like_dislike(x: gr.LikeData):
+#     print(x.index, x.value, x.liked)
 
-def add_message(history, message):
-    for x in message["files"]:
-        history.append(((x,), None))
-    if message["text"] is not None:
-        history.append((message["text"], None))
-    return history, gr.MultimodalTextbox(value=None, interactive=False)
+# def add_message(history, message):
+#     for x in message["files"]:
+#         history.append(((x,), None))
+#     if message["text"] is not None:
+#         history.append((message["text"], None))
+#     return history, gr.MultimodalTextbox(value=None, interactive=False)
 
-def bot(history):
-    response = "**That's cool!**"
-    history[-1][1] = ""
-    for character in response:
-        history[-1][1] += character
-        time.sleep(0.05)
-        yield history
+# def bot(history):
+#     response = "**That's cool!**"
+#     history[-1][1] = ""
+#     for character in response:
+#         history[-1][1] += character
+#         time.sleep(0.05)
+#         yield history
 
 
-with gr.Blocks() as demo:
-    chatbot = gr.Chatbot(
-        [],
-        elem_id="chatbot",
-        bubble_full_width=False,
-    )
+# with gr.Blocks() as demo:
+#     chatbot = gr.Chatbot(
+#         [],
+#         elem_id="chatbot",
+#         bubble_full_width=False,
+#     )
 
-    chat_input = gr.MultimodalTextbox(interactive=True, file_types=["image"], placeholder="Enter message or upload file...", show_label=False)
+#     chat_input = gr.MultimodalTextbox(interactive=True, file_types=["image"], placeholder="Enter message or upload file...", show_label=False)
 
-    chat_msg = chat_input.submit(add_message, [chatbot, chat_input], [chatbot, chat_input])
-    bot_msg = chat_msg.then(bot, chatbot, chatbot, api_name="bot_response")
-    bot_msg.then(lambda: gr.MultimodalTextbox(interactive=True), None, [chat_input])
+#     chat_msg = chat_input.submit(add_message, [chatbot, chat_input], [chatbot, chat_input])
+#     bot_msg = chat_msg.then(bot, chatbot, chatbot, api_name="bot_response")
+#     bot_msg.then(lambda: gr.MultimodalTextbox(interactive=True), None, [chat_input])
 
-    chatbot.like(print_like_dislike, None, None)
+#     chatbot.like(print_like_dislike, None, None)
 
-demo.queue()
-if __name__ == "__main__":
-    demo.launch()
+# demo.queue()
+# if __name__ == "__main__":
+#     demo.launch()
