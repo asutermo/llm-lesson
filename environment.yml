@@ -1,0 +1,13 @@
+name: llm-lesson
+channels: 
+  - conda-forge
+dependencies:
+  - python=3.10.6
+  - cudatoolkit=11.7
+  - cudnn=8.1
+  - git
+  - anaconda
+  - pip
+  - pip:
+    - --extra-index-url https://download.pytorch.org/whl/cu117
+    - -r requirements.txt
