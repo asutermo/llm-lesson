@@ -1,9 +1,12 @@
 import gradio as gr
 import os
+import requests
 import time
 
+from bs4 import BeautifulSoup  # type: ignore
+
 from dotenv import load_dotenv, find_dotenv
-from openai import OpenAI
+# from openai import OpenAI
 from transformers import pipeline  # type: ignore
 
 
@@ -22,10 +25,27 @@ articles = {
     "Taxes are due even if you object to government policies or doubt the validity of the 16th Amendment’s ratification": "https://theconversation.com/taxes-are-due-even-if-you-object-to-government-policies-or-doubt-the-validity-of-the-16th-amendments-ratification-227208"
 }
 
-def summarize(article_title: str, summarize_or_sentiment:str):
+def parse_html(url: str) -> str:
+    response = requests.get(url)
+    if response.status_code == 403:
+        raise Exception("Unable to access content.")
+    soup = BeautifulSoup(response.text, "html.parser")
+    article_body_html = soup.find("div", itemprop="articleBody")
+    if article_body_html:
+        return article_body_html.get_text(strip=False)
+    else:
+        raise Exception("No article body found.")
+
+def summarize(article_title: str, summarize_or_sentiment:str) -> str:
     article_link = article[article]
-    print(article_link)
-    pass
+    article_text = parse_html(article_link)
+
+    if summarize_or_sentiment == "summarize":
+        summary = summarizer_pipeline(article_text)
+        return summary
+    else:
+        sentiment = sentiment_pipeline(article_text)
+        return sentiment
 
 
 huggingface_demo = gr.Interface(
