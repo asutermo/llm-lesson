@@ -2,7 +2,55 @@ import gradio as gr
 import os
 import time
 
+from dotenv import load_dotenv, find_dotenv
+from openai import OpenAI
+from transformers import pipeline  # type: ignore
+
+
+load_dotenv(find_dotenv())
+
+summarizer_pipeline = pipeline("summarization", model="facebook/bart-large-cnn")
+sentiment_pipeline = pipeline("sentiment-analysis", model="siebert/sentiment-roberta-large-english")
+
+# Summ/Sentiment
+# radio button links
+# then spit out the values
+articles = {
+    "Native American voices are finally factoring into energy projects – a hydropower ruling is a victory for environmental justice on tribal lands": "https://theconversation.com/native-american-voices-are-finally-factoring-into-energy-projects-a-hydropower-ruling-is-a-victory-for-environmental-justice-on-tribal-lands-224612",
+    "Does ‘virtue signaling’ pay off for entrepreneurs? We studied 81,799 Airbnb listings to find out": "https://theconversation.com/does-virtue-signaling-pay-off-for-entrepreneurs-we-studied-81-799-airbnb-listings-to-find-out-226450",
+    "Rural students’ access to Wi-Fi is in jeopardy as pandemic-era resources recede": "https://theconversation.com/rural-students-access-to-wi-fi-is-in-jeopardy-as-pandemic-era-resources-recede-225945",
+    "Taxes are due even if you object to government policies or doubt the validity of the 16th Amendment’s ratification": "https://theconversation.com/taxes-are-due-even-if-you-object-to-government-policies-or-doubt-the-validity-of-the-16th-amendments-ratification-227208"
+}
+
+def summarize(article_title: str, summarize_or_sentiment:str):
+    article_link = article[article]
+    print(article_link)
+    pass
+
+
+huggingface_demo = gr.Interface(
+    fn = summarize,
+    inputs = [
+        gr.Dropdown(
+            articles.keys(), label="articles", info="List of articles to summarize or get sentiment of!"
+        ),
+        gr.Radio(["summarize", "sentiment"], label="type", info="Summarize or sentiment analysis of article"),
+    ],
+    outputs = ["text"]
+)
+
+huggingface_demo.launch()
+
+# Find API Key
+
 # Chatbot demo with multimodal input (text, markdown, LaTeX, code blocks, image, audio, & video). Plus shows support for streaming text.
+
+def openai_predict():
+    pass
+
+def huggingface_predict():
+    pass
+
 
 
 def print_like_dislike(x: gr.LikeData):

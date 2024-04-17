@@ -9,5 +9,10 @@
 
 
 - Showcase ChatGPT
+- Showcase HuggingFace
 - Showcase Gradio Chat
+- Show Langchain
 
+
+- Chatbot - OpenAI
+- Sentiment Analysis and Summarization - BERT
