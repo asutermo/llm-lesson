@@ -6,7 +6,7 @@ import time
 from bs4 import BeautifulSoup  # type: ignore
 
 from dotenv import load_dotenv, find_dotenv
-# from openai import OpenAI
+from openai import OpenAI
 from transformers import pipeline  # type: ignore
 
 # Load keys
@@ -59,11 +59,75 @@ def huggingface_demo() -> gr.Interface:
         examples=[[sorted_article_titles[0], "summarize"], [sorted_article_titles[1], "sentiment"]]
     )
 
+def huggingface_sentiment_demo() -> gr.Interface:
+    return gr.Interface.from_pipeline(sentiment_pipeline)
 
+
+def huggingface_summary_demo() -> gr.Interface:
+    return gr.Interface.from_pipeline(summarizer_pipeline)
+
+def huggingface_pipeline_demo() -> gr.Interface:
+    pass
+
+default_personality = "You are an instructional, informative, and kind AI assistant."
+current_personality = default_personality
+openai_client = OpenAI()
+openapi_messages = []
+
+def chat(personality: str, content: str) -> str:
+    global current_personality, default_personality, openapi_messages
+
+    if not personality: # Set default chat personality
+        personality = default_personality
+        current_personality = default_personality
+        openapi_messages = [
+            {"role": "system", "content": personality},
+        ]        
+    elif personality != current_personality: # reset with new chat personality
+        current_personality = personality
+        openapi_messages = [
+            {"role": "system", "content": personality},
+        ]
+    if not content:
+        return None
+    
+    openapi_messages.append({"role": "user", "content": content})
+    response = openai_client.chat.completions.create(
+      model="gpt-3.5-turbo",
+      messages=openapi_messages
+    )
+    bot_response = response.choices[0].message.content
+    openapi_messages.append({"role": "assistant", "content": bot_response})
+    return bot_response
+
+def openapi_demo() -> gr.Interface:
+    return gr.Interface(
+        chat,
+        inputs=[gr.Textbox(lines=2, label="ChatGPT Personality", value="You are an instructional, informative, and kind AI assistant."), gr.Textbox(lines=5, label="ChatGPT 3.5 Turbo")],
+        outputs=gr.Textbox(label="Reply"),
+        title="Gradio and ChatGPT 3.5 Turbo"
+    )
+
+def main_ui() -> gr.TabbedInterface:
+    return gr.TabbedInterface(
+        [
+            huggingface_sentiment_demo(),
+            huggingface_summary_demo(),
+            huggingface_demo(),
+            openapi_demo()
+        ],
+        [
+            "Simple Sentiment",
+            "Simple Summarization",
+            "Hugging Face Pipelines",
+            "OpenAPI Demo"
+        ],
+        title="Demo"
+    )
 
 
 if __name__ == "__main__":
-    huggingface_demo().launch()
+    main_ui().launch()
     
 # Find API Key
 
