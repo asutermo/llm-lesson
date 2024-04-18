@@ -1,4 +1,3 @@
-import os
 import time
 
 import gradio as gr
@@ -182,14 +181,15 @@ def openapi_demo() -> gr.Interface:
         title="Gradio and ChatGPT 3.5 Turbo",
     )
 
-@traceable # Auto-trace this function
+
+@traceable  # Auto-trace this function
 def trace_oai_pipeline(user_input: str):
     langsmith_client = wrappers.wrap_openai(OpenAI())
     result = langsmith_client.chat.completions.create(
-        messages=[{"role": "user", "content": user_input}],
-        model="gpt-3.5-turbo"
+        messages=[{"role": "user", "content": user_input}], model="gpt-3.5-turbo"
     )
     return result.choices[0].message.content
+
 
 def langsmith_demo() -> gr.Interface:
     return gr.Interface(
@@ -198,28 +198,34 @@ def langsmith_demo() -> gr.Interface:
             gr.Textbox(
                 lines=2,
                 label="ChatGPT Trace",
-                value="Write an obfuscated hello world app in python."
+                value="Write an obfuscated hello world app in python.",
             )
         ],
         outputs=gr.Textbox(label="Reply"),
         title="Gradio and ChatGPT 3.5 Turbo with Langsmith Tracing",
     )
 
+
 apify = ApifyWrapper()
+
+
 def llm_qa(query: str) -> str:
     loader = apify.call_actor(
         actor_id="apify/website-content-crawler",
-        run_input={"startUrls": [{"url": "https://python.langchain.com/docs/use_cases/"}]},
+        run_input={
+            "startUrls": [{"url": "https://python.langchain.com/docs/use_cases/"}]
+        },
         dataset_mapping_function=lambda item: Document(
             page_content=item["text"] or "", metadata={"source": item["url"]}
         ),
-    )    
+    )
 
     index = VectorstoreIndexCreator().from_loaders([loader])
 
     # Query the vector store
     result = index.query(query)
     return result
+
 
 def langchain_demo() -> gr.Interface:
     return gr.Interface(
@@ -228,12 +234,13 @@ def langchain_demo() -> gr.Interface:
             gr.Textbox(
                 lines=2,
                 label="LangChain KB Query",
-                value="How do I do synthetic data creation?"
+                value="How do I do synthetic data creation?",
             )
         ],
         outputs=gr.Textbox(label="LangChain KB Reply"),
         title="Gradio and LangChain Knowledge Base Query Answering",
     )
+
 
 def main_ui() -> gr.TabbedInterface:
     return gr.TabbedInterface(
@@ -243,7 +250,7 @@ def main_ui() -> gr.TabbedInterface:
             huggingface_demo(),
             openapi_demo(),
             langchain_demo(),
-            langsmith_demo()
+            langsmith_demo(),
         ],
         [
             "Simple Sentiment",
