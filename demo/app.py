@@ -5,6 +5,12 @@ import gradio as gr
 import requests
 from bs4 import BeautifulSoup  # type: ignore
 from dotenv import find_dotenv, load_dotenv
+# from langchain_community.llms.openllm import PromptTemplate
+# from langchain.text_splitter import CharacterTextSplitter
+# from langchain.chains.summarize import load_summarize_chain
+# from langchain_community.document_loaders import PyPDFLoader
+from langsmith import wrappers
+from langsmith import traceable
 from openai import OpenAI
 from transformers import pipeline  # type: ignore
 
@@ -178,6 +184,27 @@ def openapi_demo() -> gr.Interface:
         title="Gradio and ChatGPT 3.5 Turbo",
     )
 
+@traceable # Auto-trace this function
+def trace_oai_pipeline(user_input: str):
+    langsmith_client = wrappers.wrap_openai(OpenAI())
+    result = langsmith_client.chat.completions.create(
+        messages=[{"role": "user", "content": user_input}],
+        model="gpt-3.5-turbo"
+    )
+    return result.choices[0].message.content
+
+def langsmith_demo() -> gr.Interface:
+    return gr.Interface(
+        trace_oai_pipeline,
+        inputs=[
+            gr.Textbox(
+                lines=2,
+                label="ChatGPT Trace"
+            )
+        ],
+        outputs=gr.Textbox(label="Reply"),
+        title="Gradio and ChatGPT 3.5 Turbo with Langsmith Tracing",
+    )
 
 def main_ui() -> gr.TabbedInterface:
     return gr.TabbedInterface(
@@ -186,12 +213,15 @@ def main_ui() -> gr.TabbedInterface:
             huggingface_summary_demo(),
             huggingface_demo(),
             openapi_demo(),
+            langsmith_demo(),
+
         ],
         [
             "Simple Sentiment",
             "Simple Summarization",
             "Hugging Face Pipelines",
             "OpenAPI Demo",
+            "LangSmith Demo",
         ],
         title="Demo",
     )
