@@ -209,7 +209,7 @@ apify = ApifyWrapper()
 def llm_qa(query: str) -> str:
     loader = apify.call_actor(
         actor_id="apify/website-content-crawler",
-        run_input={"startUrls": [{"url": "https://python.langchain.com/docs/"}]},
+        run_input={"startUrls": [{"url": "https://python.langchain.com/docs/use_cases/"}]},
         dataset_mapping_function=lambda item: Document(
             page_content=item["text"] or "", metadata={"source": item["url"]}
         ),
