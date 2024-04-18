@@ -5,12 +5,10 @@ import gradio as gr
 import requests
 from bs4 import BeautifulSoup  # type: ignore
 from dotenv import find_dotenv, load_dotenv
-# from langchain_community.llms.openllm import PromptTemplate
-# from langchain.text_splitter import CharacterTextSplitter
-# from langchain.chains.summarize import load_summarize_chain
-# from langchain_community.document_loaders import PyPDFLoader
-from langsmith import wrappers
-from langsmith import traceable
+from langchain.docstore.document import Document
+from langchain.indexes import VectorstoreIndexCreator
+from langchain_community.utilities import ApifyWrapper
+from langsmith import traceable, wrappers
 from openai import OpenAI
 from transformers import pipeline  # type: ignore
 
@@ -199,11 +197,42 @@ def langsmith_demo() -> gr.Interface:
         inputs=[
             gr.Textbox(
                 lines=2,
-                label="ChatGPT Trace"
+                label="ChatGPT Trace",
+                value="Write an obfuscated hello world app in python."
             )
         ],
         outputs=gr.Textbox(label="Reply"),
         title="Gradio and ChatGPT 3.5 Turbo with Langsmith Tracing",
+    )
+
+apify = ApifyWrapper()
+def llm_qa(query: str) -> str:
+    loader = apify.call_actor(
+        actor_id="apify/website-content-crawler",
+        run_input={"startUrls": [{"url": "https://python.langchain.com/docs/"}]},
+        dataset_mapping_function=lambda item: Document(
+            page_content=item["text"] or "", metadata={"source": item["url"]}
+        ),
+    )    
+
+    index = VectorstoreIndexCreator().from_loaders([loader])
+
+    # Query the vector store
+    result = index.query(query)
+    return result
+
+def langchain_demo() -> gr.Interface:
+    return gr.Interface(
+        llm_qa,
+        inputs=[
+            gr.Textbox(
+                lines=2,
+                label="LangChain KB Query",
+                value="How do I do synthetic data creation?"
+            )
+        ],
+        outputs=gr.Textbox(label="LangChain KB Reply"),
+        title="Gradio and LangChain Knowledge Base Query Answering",
     )
 
 def main_ui() -> gr.TabbedInterface:
@@ -213,14 +242,15 @@ def main_ui() -> gr.TabbedInterface:
             huggingface_summary_demo(),
             huggingface_demo(),
             openapi_demo(),
-            langsmith_demo(),
-
+            langchain_demo(),
+            langsmith_demo()
         ],
         [
             "Simple Sentiment",
             "Simple Summarization",
             "Hugging Face Pipelines",
             "OpenAPI Demo",
+            "LangChain Demo",
             "LangSmith Demo",
         ],
         title="Demo",
