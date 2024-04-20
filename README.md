@@ -25,3 +25,7 @@ https://python.langchain.com/docs/use_cases/web_scraping/
 https://github.com/EnkrateiaLucca/summarization_with_langchain/blob/main/pdf_summarization_app.py
 https://mariani.ai/llm-apps-with-huggingface-a-practical-introduction/
 https://medium.com/@shrinath.suresh/building-an-interactive-streaming-chatbot-with-langchain-transformers-and-gradio-93b97378353e
+https://platform.openai.com/docs/guides/text-generation/chat-completions-api
+https://platform.openai.com/docs/guides/prompt-engineering/six-strategies-for-getting-better-results
+https://medium.com/@SainadhAmul/building-a-chatbot-powered-by-chatgpt-gradio-a-python-implementation-in-just-25-lines-of-code-e41a4c046748
+https://medium.com/@theodoruszq/building-your-own-chatgpt-with-gradio-8af95317cf00

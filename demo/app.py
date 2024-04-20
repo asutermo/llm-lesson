@@ -1,5 +1,8 @@
 import time
 
+from urllib.parse import urlparse
+
+import feedparser
 import gradio as gr
 import requests
 from bs4 import BeautifulSoup  # type: ignore
@@ -20,28 +23,38 @@ sentiment_pipeline = pipeline(
     "sentiment-analysis", model="siebert/sentiment-roberta-large-english"
 )
 
-articles = {
-    "Native American voices are finally factoring into energy projects – a hydropower ruling is a victory for environmental justice on tribal lands": "https://theconversation.com/native-american-voices-are-finally-factoring-into-energy-projects-a-hydropower-ruling-is-a-victory-for-environmental-justice-on-tribal-lands-224612",
-    "Does ‘virtue signaling’ pay off for entrepreneurs? We studied 81,799 Airbnb listings to find out": "https://theconversation.com/does-virtue-signaling-pay-off-for-entrepreneurs-we-studied-81-799-airbnb-listings-to-find-out-226450",
-    "Rural students’ access to Wi-Fi is in jeopardy as pandemic-era resources recede": "https://theconversation.com/rural-students-access-to-wi-fi-is-in-jeopardy-as-pandemic-era-resources-recede-225945",
-    "Taxes are due even if you object to government policies or doubt the validity of the 16th Amendment’s ratification": "https://theconversation.com/taxes-are-due-even-if-you-object-to-government-policies-or-doubt-the-validity-of-the-16th-amendments-ratification-227208",
-}
-
-
 def parse_html(url: str) -> str:
     response = requests.get(url)
     if response.status_code == 403:
         raise Exception("Unable to access content.")
     soup = BeautifulSoup(response.text, "html.parser")
-    article_body_html = soup.find("div", itemprop="articleBody")
-    if article_body_html:
-        return article_body_html.get_text(strip=False)
-    else:
-        raise Exception("No article body found.")
 
+    content = soup.find('article') or \
+              soup.find('div', {'role': 'main'}) or \
+              soup.find('div', id="wrapper") or \
+              soup.find('div', id="container") or \
+              soup.find('div', class_=lambda x: x and 'content' in x.split()) or \
+              soup.find('div', class_=lambda x: x and 'content-outer' in x.split()) or \
+              soup.find('div', class_=lambda x: x and 'content-inner' in x.split())
+    print(content)
+
+    if content:
+        article_body_html = content.get_text(strip=True)
+    else:
+        article_body_html = None
+    
+    if article_body_html:
+        return article_body_html
+    else:
+        return 'Unable to parse summary'
+
+FEED_URL = "https://news.ycombinator.com/rss"
+feed = feedparser.parse(FEED_URL)
+articles = {f"{entry.title} - {urlparse(entry.link).netloc}": entry.link for entry in feed.entries}
 
 def summarize(article_title: str, summarize_or_sentiment: str) -> str:
     article_link = articles[article_title]
+    print(f'Accessing article at {article_link}')
     article_text = parse_html(article_link)
 
     if summarize_or_sentiment == "summarize":
@@ -58,9 +71,9 @@ def summarize(article_title: str, summarize_or_sentiment: str) -> str:
             + str(sentiment[0]["score"])
         )
 
-
 def huggingface_demo() -> gr.Interface:
     sorted_article_titles = sorted(articles.keys())
+
     return gr.Interface(
         fn=summarize,
         inputs=[
@@ -84,16 +97,7 @@ def huggingface_demo() -> gr.Interface:
 
 
 def huggingface_sentiment_demo() -> gr.Interface:
-    return gr.Interface.from_pipeline(sentiment_pipeline)
-
-
-def huggingface_summary_demo() -> gr.Interface:
-    return gr.Interface.from_pipeline(summarizer_pipeline)
-
-
-def huggingface_pipeline_demo() -> gr.Interface:
-    pass
-
+    return gr.Interface.from_pipeline(sentiment_pipeline, examples=["I enjoy this!", "I hate this!", "I am neutral."])
 
 default_personality = "You are an instructional, informative, and kind AI assistant."
 current_personality = default_personality
@@ -175,7 +179,7 @@ def openapi_demo() -> gr.Interface:
                 label="ChatGPT Personality",
                 value="You are an instructional, informative, and kind AI assistant.",
             ),
-            gr.Textbox(lines=5, label="ChatGPT 3.5 Turbo"),
+            gr.Textbox(lines=5, label="ChatGPT 3.5 Turbo", value="Tell me about yourself!"),
         ],
         outputs=gr.Textbox(label="Reply"),
         title="Gradio and ChatGPT 3.5 Turbo",
@@ -246,7 +250,6 @@ def main_ui() -> gr.TabbedInterface:
     return gr.TabbedInterface(
         [
             huggingface_sentiment_demo(),
-            huggingface_summary_demo(),
             huggingface_demo(),
             openapi_demo(),
             langchain_demo(),
