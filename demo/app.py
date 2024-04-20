@@ -11,6 +11,7 @@ from dotenv import find_dotenv, load_dotenv
 from langchain.docstore.document import Document
 from langchain.indexes import VectorstoreIndexCreator
 from langchain_community.utilities import ApifyWrapper
+from langchain_community.document_loaders import ApifyDatasetLoader
 from langsmith import traceable, wrappers
 from openai import OpenAI
 from transformers import pipeline  # type: ignore
@@ -218,13 +219,21 @@ apify = ApifyWrapper()
 
 
 def llm_qa(query: str) -> str:
-    loader = apify.call_actor(
-        actor_id="apify/website-content-crawler",
-        run_input={
-            "startUrls": [{"url": "https://python.langchain.com/docs/use_cases/"}]
-        },
-        dataset_mapping_function=lambda item: Document(
-            page_content=item["text"] or "", metadata={"source": item["url"]}
+    # scraper if needed, takes awhile
+    # loader = apify.call_actor(
+    #     actor_id="apify/website-content-crawler",
+    #     run_input={
+    #         "startUrls": [{"url": "https://python.langchain.com/docs/use_cases/"}]
+    #     },
+    #     dataset_mapping_function=lambda item: Document(
+    #         page_content=item["text"] or "", metadata={"source": item["url"]}
+    #     ),
+    # )
+    #https://console.apify.com/actors/aYG0l9s7dbB7j3gbS/runs/Kh9YxOBLlMUusL7dO#storage
+    loader = ApifyDatasetLoader(
+        dataset_id="qm4Ww9p4X7mjggmMC",
+        dataset_mapping_function=lambda dataset_item: Document(
+            page_content=dataset_item["text"] or "", metadata={"source": dataset_item["url"]}
         ),
     )
 
@@ -261,7 +270,6 @@ def main_ui() -> gr.TabbedInterface:
         ],
         [
             "Simple Sentiment",
-            "Simple Summarization",
             "Hugging Face Pipelines",
             "OpenAPI Demo",
             "LangChain Demo",
