@@ -53,10 +53,9 @@ def parse_html(url: str) -> str:
     else:
         return 'Unable to parse summary'
 
-FEED_URL = "https://news.ycombinator.com/rss"
+FEED_URL = "https://www.theguardian.com/us/rss"
 feed = feedparser.parse(FEED_URL)
-SUPPORTED_URLS = ["apnews.com", "bbc.com", "www.theguardian.com", "www.nature.com"]
-articles = {entry.title: entry.link for entry in feed.entries if entry.link if urlparse(entry.link).netloc in SUPPORTED_URLS} 
+articles = {entry.title: entry.link for entry in feed.entries} 
 
 def summarize(article_title: str, summarize_or_sentiment: str) -> str:
     article_link = articles[article_title]
