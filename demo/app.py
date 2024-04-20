@@ -1,4 +1,5 @@
 import time
+import re
 
 from urllib.parse import urlparse
 
@@ -23,6 +24,7 @@ sentiment_pipeline = pipeline(
     "sentiment-analysis", model="siebert/sentiment-roberta-large-english"
 )
 
+# Hacky to support multiple sites
 def parse_html(url: str) -> str:
     response = requests.get(url)
     if response.status_code == 403:
@@ -36,14 +38,16 @@ def parse_html(url: str) -> str:
               soup.find('div', class_=lambda x: x and 'content' in x.split()) or \
               soup.find('div', class_=lambda x: x and 'content-outer' in x.split()) or \
               soup.find('div', class_=lambda x: x and 'content-inner' in x.split())
-    print(content)
 
     if content:
         article_body_html = content.get_text(strip=True)
     else:
         article_body_html = None
-    
+  
     if article_body_html:
+        print(article_body_html)
+        clean = re.compile('<.*?>')
+        article_body_html = re.sub(clean, '', article_body_html)
         return article_body_html
     else:
         return 'Unable to parse summary'
