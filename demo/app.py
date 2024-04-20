@@ -32,14 +32,14 @@ def parse_html(url: str) -> str:
         raise Exception("Unable to access content.")
     soup = BeautifulSoup(response.text, "html.parser")
 
+    # div - maincontent - guardian
+    # article - nature
+    # bsp-story-page - apnews
+    # bbc - section - text-block
     content = soup.find('article') or \
-              soup.find('div', {'role': 'main'}) or \
-              soup.find('div', id="wrapper") or \
-              soup.find('div', id="container") or \
-              soup.find('div', class_=lambda x: x and 'content' in x.split()) or \
-              soup.find('div', class_=lambda x: x and 'content-outer' in x.split()) or \
-              soup.find('div', class_=lambda x: x and 'content-inner' in x.split())
-
+              soup.find('div', id="maincontent") or \
+              soup.find('bsp-story-page') or \
+              soup.find('section', class_="text-block")
     if content:
         article_body_html = content.get_text(strip=True)
     else:
@@ -55,7 +55,8 @@ def parse_html(url: str) -> str:
 
 FEED_URL = "https://news.ycombinator.com/rss"
 feed = feedparser.parse(FEED_URL)
-articles = {f"{entry.title} - {urlparse(entry.link).netloc}": entry.link for entry in feed.entries}
+SUPPORTED_URLS = ["apnews.com", "bbc.com", "www.theguardian.com", "www.nature.com"]
+articles = {entry.title: entry.link for entry in feed.entries if entry.link if urlparse(entry.link).netloc in SUPPORTED_URLS} 
 
 def summarize(article_title: str, summarize_or_sentiment: str) -> str:
     article_link = articles[article_title]
