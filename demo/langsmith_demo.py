@@ -1,8 +1,12 @@
 import gradio as gr
+from dotenv import find_dotenv, load_dotenv
 from langsmith import traceable, wrappers
 from openai import OpenAI
 
 __all__ = ["langsmith_demo"]
+
+# Load keys
+load_dotenv(find_dotenv())
 
 
 @traceable  # Auto-trace this function

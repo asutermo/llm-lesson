@@ -1,9 +1,14 @@
 import time
 
 import gradio as gr
+from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
 
 __all__ = ["openapi_demo"]
+
+# Load keys
+load_dotenv(find_dotenv())
+
 
 default_personality = "You are an instructional, informative, and kind AI assistant."
 current_personality = default_personality

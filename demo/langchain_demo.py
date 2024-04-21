@@ -1,8 +1,12 @@
 import gradio as gr
+from dotenv import find_dotenv, load_dotenv
 from langchain.docstore.document import Document
 from langchain.indexes import VectorstoreIndexCreator
 from langchain_community.document_loaders import ApifyDatasetLoader
 from langchain_community.utilities import ApifyWrapper
+
+# Load keys
+load_dotenv(find_dotenv())
 
 apify = ApifyWrapper()
 
