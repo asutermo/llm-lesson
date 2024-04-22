@@ -4,7 +4,7 @@ import gradio as gr
 from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
 
-__all__ = ["openapi_demo"]
+__all__ = ["openai_demo"]
 
 # Load keys
 load_dotenv(find_dotenv())
@@ -43,45 +43,46 @@ def chat(personality: str, content: str) -> str:
 
 
 def chat_demo_2() -> gr.Blocks:
-    chatbot = gr.Chatbot()
-    msg = gr.Textbox()
-    clear = gr.Button("Clear")
-    openapi_chatbot_messages = [
-        {
-            "role": "system",
-            "content": "You are an instructional, informative, and kind AI assistant.",
-        }
-    ]
+    with gr.Blocks() as chat_demo_2:
+        chatbot = gr.Chatbot()
+        msg = gr.Textbox()
+        clear = gr.Button("Clear")
+        openapi_chatbot_messages = [
+            {
+                "role": "system",
+                "content": "You are an instructional, informative, and kind AI assistant.",
+            }
+        ]
 
-    def user(user_message, history):
-        openapi_chatbot_messages.append({"role": "user", "content": user_message})
-        return "", history + [[user_message, None]]
+        def user(user_message, history):
+            openapi_chatbot_messages.append({"role": "user", "content": user_message})
+            return "", history + [[user_message, None]]
 
-    def bot(history):
-        response = openai_client.chat.completions.create(
-            model="gpt-3.5-turbo", messages=openapi_chatbot_messages
+        def bot(history):
+            response = openai_client.chat.completions.create(
+                model="gpt-3.5-turbo", messages=openapi_chatbot_messages
+            )
+            bot_message = response.choices[0].message.content
+            openapi_messages.append(
+                {"role": "assistant", "content": openapi_chatbot_messages}
+            )
+
+            history[-1][1] = ""
+            for character in bot_message:
+                history[-1][1] += character
+                time.sleep(0.05)
+                yield history
+
+        msg.submit(user, [msg, chatbot], [msg, chatbot], queue=False).then(
+            bot, chatbot, chatbot
         )
-        bot_message = response.choices[0].message.content
-        openapi_messages.append(
-            {"role": "assistant", "content": openapi_chatbot_messages}
-        )
+        clear.click(lambda: None, None, chatbot, queue=False)
 
-        history[-1][1] = ""
-        for character in bot_message:
-            history[-1][1] += character
-            time.sleep(0.05)
-            yield history
-
-    msg.submit(user, [msg, chatbot], [msg, chatbot], queue=False).then(
-        bot, chatbot, chatbot
-    )
-    clear.click(lambda: None, None, chatbot, queue=False)
-
-    chat_demo_2.queue()
-    return chat_demo_2
+        chat_demo_2.queue()
+        return chat_demo_2
 
 
-def openapi_demo() -> gr.Interface:
+def openai_demo() -> gr.Interface:
     return gr.Interface(
         chat,
         inputs=[
@@ -100,4 +101,4 @@ def openapi_demo() -> gr.Interface:
 
 
 if __name__ == "__main__":
-    openapi_demo().launch()
+    openai_demo().launch()

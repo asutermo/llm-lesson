@@ -19,7 +19,7 @@ def main_ui() -> gr.TabbedInterface:
         [
             huggingface_sentiment_demo(),
             huggingface_demo(),
-            openapi_demo(),
+            openai_demo(),
             langchain_demo(),
             langsmith_demo(),
         ],
